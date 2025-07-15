@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from 'vue'
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 
 defineOptions({
   name: 'UserForm',
@@ -16,9 +18,12 @@ const formData = ref({
 const submittedCards = ref([])
 
 const submitForm = () => {
-  submittedCards.value.push({
-    ...formData.value,
-  })
+  validateName(true)
+  validatePassword(true)
+  if (!errors.value.username && !errors.value.password) {
+    submittedCards.value.push({ ...formData.value })
+    clearForm()
+  }
 }
 
 const clearForm = () => {
@@ -28,6 +33,48 @@ const clearForm = () => {
     isAustralian: false,
     reason: '',
     gender: '',
+  }
+}
+
+// 用于存储表单所有字段的错误信息
+const errors = ref({
+  username: null,
+  password: null,
+  resident: null,
+  gender: null,
+  reason: null,
+})
+// 校验用户名是否合法
+const validateName = (blur) => {
+  if (formData.value.username.length < 3) {
+    if (blur) errors.value.username = 'at least 3 characters'
+    else errors.value.username = 'must be at least 3 characters'
+  } else {
+    errors.value.username = null
+  }
+}
+
+// 校验密码是否合法
+const validatePassword = (blur) => {
+  const password = formData.value.password;
+  const minLength = 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  if (password.length < minLength) {
+    if (blur) errors.value.password = `Password must be at least ${minLength} characters long.`;
+  } else if (!hasUppercase) {
+    if (blur) errors.value.password = "Password must contain at least one uppercase letter.";
+  } else if (!hasLowercase) {
+    if (blur) errors.value.password = "Password must contain at least one lowercase letter.";
+  } else if (!hasNumber) {
+    if (blur) errors.value.password = "Password must contain at least one number.";
+  } else if (!hasSpecialChar) {
+    if (blur) errors.value.password = "Password must contain at least one special character.";
+  } else {
+    errors.value.password = null;
   }
 }
 </script>
@@ -42,7 +89,15 @@ const clearForm = () => {
           <div class="row mb-3">
             <div class="col-12 col-md-6 mb-3 mb-md-0">
               <label for="username" class="form-label">Username</label>
-              <input type="text" class="form-control" id="username" v-model="formData.username" />
+              <input
+                type="text"
+                class="form-control"
+                id="username"
+                v-model="formData.username"
+                @blur="() => validateName(true)"
+                @input="() => validateName(false)"
+              />
+              <div v-if="errors.username" class="text-danger">{{ errors.username }}</div>
             </div>
             <div class="col-12 col-md-6">
               <label for="password" class="form-label">Password</label>
@@ -51,7 +106,10 @@ const clearForm = () => {
                 class="form-control"
                 id="password"
                 v-model="formData.password"
+                @blur="() => validatePassword(true)"
+                @input="() => validatePassword(false)"
               />
+              <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
             </div>
           </div>
 
@@ -94,33 +152,16 @@ const clearForm = () => {
           </div>
         </form>
 
-        <!-- 卡片显示区域 -->
+        <!-- PrimeVue DataTable 展示区域 -->
         <div class="row mt-5" v-if="submittedCards.length > 0">
           <div class="col-12">
-            <div class="d-flex flex-wrap justify-content-center">
-              <!-- 卡片循环 -->
-              <div
-                v-for="(card, index) in submittedCards"
-                :key="index"
-                class="card m-2"
-                style="width: 18rem"
-              >
-                <div class="card-header">User Information</div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item"><strong>Username:</strong> {{ card.username }}</li>
-                  <li class="list-group-item"><strong>Password:</strong> {{ card.password }}</li>
-                  <li class="list-group-item">
-                    <strong>Australian Resident:</strong> {{ card.isAustralian ? 'Yes' : 'No' }}
-                  </li>
-                  <li class="list-group-item">
-                    <strong>Gender:</strong> {{ card.gender || 'Not specified' }}
-                  </li>
-                  <li class="list-group-item">
-                    <strong>Reason:</strong> {{ card.reason || 'N/A' }}
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <DataTable :value="submittedCards" tableStyle="min-width: 100%">
+              <Column field="username" header="Username" />
+              <Column field="password" header="Password" />
+              <Column field="isAustralian" header="Australian Resident" :body="row => row.isAustralian ? 'Yes' : 'No'" />
+              <Column field="gender" header="Gender" />
+              <Column field="reason" header="Reason" />
+            </DataTable>
           </div>
         </div>
       </div>
