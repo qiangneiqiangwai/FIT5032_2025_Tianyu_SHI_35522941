@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
 
 defineOptions({
   name: 'UserForm',
@@ -20,7 +20,16 @@ const submittedCards = ref([])
 const submitForm = () => {
   validateName(true)
   validatePassword(true)
-  if (!errors.value.username && !errors.value.password) {
+  validateGender(true)
+  validateIsAustralian(true)
+  validateReason(true)
+  if (
+    !errors.value.username &&
+    !errors.value.password &&
+    !errors.value.gender &&
+    !errors.value.isAustralian &&
+    !errors.value.reason
+  ) {
     submittedCards.value.push({ ...formData.value })
     clearForm()
   }
@@ -36,45 +45,70 @@ const clearForm = () => {
   }
 }
 
-// 用于存储表单所有字段的错误信息
 const errors = ref({
   username: null,
   password: null,
-  resident: null,
+  isAustralian: null,
   gender: null,
   reason: null,
 })
-// 校验用户名是否合法
+
 const validateName = (blur) => {
   if (formData.value.username.length < 3) {
-    if (blur) errors.value.username = 'at least 3 characters'
-    else errors.value.username = 'must be at least 3 characters'
+    if (blur) errors.value.username = 'Username must be at least 3 characters.'
+    else errors.value.username = 'At least 3 characters.'
   } else {
     errors.value.username = null
   }
 }
 
-// 校验密码是否合法
 const validatePassword = (blur) => {
-  const password = formData.value.password;
-  const minLength = 8;
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasLowercase = /[a-z]/.test(password);
-  const hasNumber = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const password = formData.value.password
+  const minLength = 8
+  const hasUppercase = /[A-Z]/.test(password)
+  const hasLowercase = /[a-z]/.test(password)
+  const hasNumber = /\d/.test(password)
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password)
 
   if (password.length < minLength) {
-    if (blur) errors.value.password = `Password must be at least ${minLength} characters long.`;
+    if (blur) errors.value.password = `Password must be at least ${minLength} characters.`
   } else if (!hasUppercase) {
-    if (blur) errors.value.password = "Password must contain at least one uppercase letter.";
+    if (blur) errors.value.password = 'Password must contain at least one uppercase letter.'
   } else if (!hasLowercase) {
-    if (blur) errors.value.password = "Password must contain at least one lowercase letter.";
+    if (blur) errors.value.password = 'Password must contain at least one lowercase letter.'
   } else if (!hasNumber) {
-    if (blur) errors.value.password = "Password must contain at least one number.";
+    if (blur) errors.value.password = 'Password must contain at least one number.'
   } else if (!hasSpecialChar) {
-    if (blur) errors.value.password = "Password must contain at least one special character.";
+    if (blur) errors.value.password = 'Password must contain at least one special character.'
   } else {
-    errors.value.password = null;
+    errors.value.password = null
+  }
+}
+
+const validateGender = (blur) => {
+  if (!formData.value.gender) {
+    if (blur) errors.value.gender = 'Please select a gender.'
+    else errors.value.gender = 'Gender is required.'
+  } else {
+    errors.value.gender = null
+  }
+}
+
+const validateIsAustralian = (blur) => {
+  if (formData.value.isAustralian !== true) {
+    if (blur) errors.value.isAustralian = 'You must be an Australian resident.'
+    else errors.value.isAustralian = 'Australian resident required.'
+  } else {
+    errors.value.isAustralian = null
+  }
+}
+
+const validateReason = (blur) => {
+  if (!formData.value.reason || formData.value.reason.length < 5) {
+    if (blur) errors.value.reason = 'Reason must be at least 5 characters.'
+    else errors.value.reason = 'At least 5 characters.'
+  } else {
+    errors.value.reason = null
   }
 }
 </script>
@@ -116,12 +150,19 @@ const validatePassword = (blur) => {
           <div class="row mb-3 align-items-center">
             <div class="col-12 col-md-6 mb-3 mb-md-0">
               <label for="gender" class="form-label">Gender</label>
-              <select class="form-select" id="gender" v-model="formData.gender">
+              <select
+                class="form-select"
+                id="gender"
+                v-model="formData.gender"
+                @blur="() => validateGender(true)"
+                @change="() => validateGender(false)"
+              >
                 <option value="" disabled>-- Please select --</option>
                 <option value="female">Female</option>
                 <option value="male">Male</option>
                 <option value="other">Other</option>
               </select>
+              <div v-if="errors.gender" class="text-danger">{{ errors.gender }}</div>
             </div>
             <div class="col-12 col-md-6">
               <div class="form-check mt-md-4">
@@ -130,8 +171,11 @@ const validatePassword = (blur) => {
                   class="form-check-input"
                   id="isAustralian"
                   v-model="formData.isAustralian"
+                  @change="() => validateIsAustralian(false)"
+                  @blur="() => validateIsAustralian(true)"
                 />
                 <label class="form-check-label" for="isAustralian">Australian Resident?</label>
+                <div v-if="errors.isAustralian" class="text-danger">{{ errors.isAustralian }}</div>
               </div>
             </div>
           </div>
@@ -143,7 +187,10 @@ const validatePassword = (blur) => {
               id="reason"
               rows="3"
               v-model="formData.reason"
+              @blur="() => validateReason(true)"
+              @input="() => validateReason(false)"
             ></textarea>
+            <div v-if="errors.reason" class="text-danger">{{ errors.reason }}</div>
           </div>
 
           <div class="text-center">
@@ -158,7 +205,11 @@ const validatePassword = (blur) => {
             <DataTable :value="submittedCards" tableStyle="min-width: 100%">
               <Column field="username" header="Username" />
               <Column field="password" header="Password" />
-              <Column field="isAustralian" header="Australian Resident" :body="row => row.isAustralian ? 'Yes' : 'No'" />
+              <Column
+                field="isAustralian"
+                header="Australian Resident"
+                :body="(row) => (row.isAustralian ? 'Yes' : 'No')"
+              />
               <Column field="gender" header="Gender" />
               <Column field="reason" header="Reason" />
             </DataTable>
