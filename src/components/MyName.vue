@@ -1,6 +1,4 @@
-<script setup>
-// No props needed for this simple component
-</script>
+<script setup></script>
 
 <template>
   <div class="my-name-container">
